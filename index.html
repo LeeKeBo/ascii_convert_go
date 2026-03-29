@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCII Art Converter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    margin-bottom: 2rem;
+    color: #fff;
+  }
+  h1 span { color: #6ee7b7; }
+
+  /* ── 上传区域 ── */
+  #drop-zone {
+    width: 100%;
+    max-width: 500px;
+    border: 2px dashed #333;
+    border-radius: 14px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    color: #666;
+  }
+  #drop-zone:hover,
+  #drop-zone.dragover { border-color: #6ee7b7; background: rgba(110,231,183,.05); color: #aaa; }
+
+  #drop-zone svg {
+    width: 44px; height: 44px;
+    stroke: #444;
+    margin-bottom: 1rem;
+    transition: stroke .2s;
+  }
+  #drop-zone:hover svg,
+  #drop-zone.dragover svg { stroke: #6ee7b7; }
+
+  #drop-zone p { line-height: 1.7; font-size: .9rem; }
+  #drop-zone strong { color: #6ee7b7; }
+  #drop-zone small { font-size: .75rem; color: #555; }
+  #file-input { display: none; }
+
+  /* ── 参数控件 ── */
+  .controls {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 900px;
+    margin: 1.5rem 0 .5rem;
+    align-items: flex-end;
+  }
+  .ctrl-group {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    font-size: .8rem;
+    color: #888;
+  }
+  .ctrl-group label { font-size: .75rem; letter-spacing: .03em; }
+  .ctrl-group input[type=range] {
+    width: 180px;
+    accent-color: #6ee7b7;
+    cursor: pointer;
+  }
+  #width-val {
+    display: inline-block;
+    min-width: 2rem;
+    color: #6ee7b7;
+    font-weight: 600;
+  }
+  .ctrl-group select,
+  .ctrl-group input[type=text] {
+    background: #1a1a1a;
+    border: 1px solid #2e2e2e;
+    color: #ddd;
+    border-radius: 7px;
+    padding: .4rem .65rem;
+    font-size: .85rem;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .ctrl-group select:focus,
+  .ctrl-group input[type=text]:focus { border-color: #6ee7b7; }
+  #custom-wrap { display: none; }
+
+  /* ── 状态栏 ── */
+  #status {
+    margin: .5rem 0;
+    font-size: .82rem;
+    color: #6ee7b7;
+    min-height: 1.4rem;
+  }
+  #status.error { color: #f87171; }
+
+  /* ── 预览区 ── */
+  #preview-area {
+    display: none;
+    width: 100%;
+    max-width: 900px;
+    gap: 1rem;
+    margin-top: .75rem;
+  }
+  #preview-area.visible {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .panel {
+    background: #161616;
+    border: 1px solid #222;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .panel-title {
+    font-size: .72rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: .5rem .85rem;
+    background: #1c1c1c;
+    color: #666;
+    border-bottom: 1px solid #222;
+  }
+  .panel img {
+    width: 100%;
+    display: block;
+    object-fit: contain;
+    max-height: 440px;
+    background: #111;
+  }
+  #result-panel { position: relative; }
+  #loading-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    place-items: center;
+    font-size: .85rem;
+    color: #6ee7b7;
+  }
+  #loading-overlay.visible { display: grid; }
+
+  /* ── 下载按钮 ── */
+  #download-btn {
+    display: none;
+    margin-top: 1.25rem;
+    background: #6ee7b7;
+    color: #0a0a0a;
+    border: none;
+    border-radius: 9px;
+    padding: .65rem 2rem;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: .02em;
+    transition: opacity .2s, transform .1s;
+  }
+  #download-btn:hover { opacity: .88; }
+  #download-btn:active { transform: scale(.97); }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid #6ee7b7;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .65s linear infinite;
+    vertical-align: middle;
+    margin-right: .4rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    #preview-area.visible { grid-template-columns: 1fr; }
+    .controls { gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🎨 ASCII <span>Art</span> Converter</h1>
+
+<!-- 上传区域 -->
+<div id="drop-zone">
+  <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="17 8 12 3 7 8"/>
+    <line x1="12" y1="3" x2="12" y2="15"/>
+  </svg>
+  <p>拖拽图片到此处<br>或 <strong>点击选择文件</strong></p>
+  <br>
+  <small>支持 JPG · PNG · GIF</small>
+</div>
+<input type="file" id="file-input" accept="image/*">
+
+<!-- 参数控件 -->
+<div class="controls">
+  <div class="ctrl-group">
+    <label>字符宽度 &nbsp;<span id="width-val">100</span></label>
+    <input type="range" id="width-range" min="40" max="200" step="5" value="100">
+  </div>
+  <div class="ctrl-group">
+    <label>字符集</label>
+    <select id="charset-select">
+      <option value="@#S%?*+;:,. ">默认</option>
+      <option value="@%#*+=-:. ">简洁</option>
+      <option value=" .:-=+*#%@">白底黑字</option>
+      <option value="custom">自定义…</option>
+    </select>
+  </div>
+  <div class="ctrl-group" id="custom-wrap">
+    <label>自定义字符集（从暗到亮）</label>
+    <input type="text" id="custom-chars" placeholder="@#*+:. " style="width:200px">
+  </div>
+</div>
+
+<!-- 状态栏 -->
+<div id="status"></div>
+
+<!-- 对比预览 -->
+<div id="preview-area">
+  <div class="panel">
+    <div class="panel-title">原图</div>
+    <img id="orig-img" src="" alt="原图">
+  </div>
+  <div class="panel" id="result-panel">
+    <div class="panel-title">ASCII 字符画</div>
+    <img id="result-img" src="" alt="结果">
+    <div id="loading-overlay">
+      <span><span class="spinner"></span>转换中…</span>
+    </div>
+  </div>
+</div>
+
+<!-- 下载按钮 -->
+<button id="download-btn">⬇&nbsp; 下载 PNG</button>
+
+<script>
+(() => {
+  const dropZone      = document.getElementById('drop-zone');
+  const fileInput     = document.getElementById('file-input');
+  const widthRange    = document.getElementById('width-range');
+  const widthVal      = document.getElementById('width-val');
+  const charsetSel    = document.getElementById('charset-select');
+  const customWrap    = document.getElementById('custom-wrap');
+  const customChars   = document.getElementById('custom-chars');
+  const statusEl      = document.getElementById('status');
+  const previewArea   = document.getElementById('preview-area');
+  const origImg       = document.getElementById('orig-img');
+  const resultImg     = document.getElementById('result-img');
+  const loadingOverlay= document.getElementById('loading-overlay');
+  const downloadBtn   = document.getElementById('download-btn');
+
+  let currentFile   = null;
+  let resultBlobURL = null;
+  let debounceTimer = null;
+
+  // ── 参数联动 ──
+  widthRange.addEventListener('input', () => {
+    widthVal.textContent = widthRange.value;
+    scheduleConvert(300);
+  });
+
+  charsetSel.addEventListener('change', () => {
+    customWrap.style.display = charsetSel.value === 'custom' ? 'flex' : 'none';
+    scheduleConvert(0);
+  });
+
+  customChars.addEventListener('input', () => scheduleConvert(400));
+
+  // ── 拖拽 & 点击上传 ──
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  ['dragleave', 'dragend'].forEach(evt =>
+    dropZone.addEventListener(evt, () => dropZone.classList.remove('dragover'))
+  );
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  // ── 文件选中 ──
+  function handleFile(file) {
+    if (!file.type.startsWith('image/')) {
+      setStatus('❌ 仅支持图片文件', true);
+      return;
+    }
+    currentFile = file;
+
+    // 展示原图
+    const reader = new FileReader();
+    reader.onload = e => {
+      origImg.src = e.target.result;
+      previewArea.classList.add('visible');
+    };
+    reader.readAsDataURL(file);
+
+    doConvert();
+  }
+
+  function scheduleConvert(delay) {
+    if (!currentFile) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(doConvert, delay);
+  }
+
+  // ── 核心转换 ──
+  async function doConvert() {
+    if (!currentFile) return;
+
+    setStatus('<span class="spinner"></span>转换中…');
+    loadingOverlay.classList.add('visible');
+    downloadBtn.style.display = 'none';
+
+    const chars = charsetSel.value === 'custom'
+      ? (customChars.value || '@#S%?*+;:,. ')
+      : charsetSel.value;
+
+    const form = new FormData();
+    form.append('image', currentFile);
+    form.append('width', widthRange.value);
+    form.append('chars', chars);
+
+    try {
+      const resp = await fetch('/convert', { method: 'POST', body: form });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({ error: resp.statusText }));
+        setStatus('❌ ' + data.error, true);
+        loadingOverlay.classList.remove('visible');
+        return;
+      }
+
+      const blob = await resp.blob();
+      if (resultBlobURL) URL.revokeObjectURL(resultBlobURL);
+      resultBlobURL = URL.createObjectURL(blob);
+
+      resultImg.src = resultBlobURL;
+      downloadBtn.style.display = 'inline-block';
+      setStatus('✅ 转换完成');
+    } catch (err) {
+      setStatus('❌ 请求失败：' + err.message, true);
+    } finally {
+      loadingOverlay.classList.remove('visible');
+    }
+  }
+
+  // ── 下载 ──
+  downloadBtn.addEventListener('click', () => {
+    if (!resultBlobURL) return;
+    const a = document.createElement('a');
+    a.href = resultBlobURL;
+    const base = currentFile.name.replace(/\.[^.]+$/, '');
+    a.download = base + '_ascii.png';
+    a.click();
+  });
+
+  function setStatus(html, isError = false) {
+    statusEl.innerHTML = html;
+    statusEl.className = isError ? 'error' : '';
+  }
+})();
+</script>
+</body>
+</html>
