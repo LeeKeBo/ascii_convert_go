@@ -9,8 +9,8 @@
 | Settings / 权限管理 | ✅ 已完成 | 2026-03-30 | 三层配置文件，allow/deny/ask 权限规则，通配符语法 |
 | Slash Commands | ✅ 已完成 | 2026-03-31 | Skills 系统，frontmatter，$ARGUMENTS，动态注入，go-review/commit/daily 三个实战 skill |
 | Claude API | ✅ 已完成 | 2026-03-31 | Messages API、Vision API、并行调用、优雅降级，实战：图片转 ASCII 同时生成描述 |
-| Agent SDK | 🔄 学习中 | - | - |
-| Subagents（子代理） | 🔲 待学习 | - | - |
+| Agent SDK | ✅ 已完成 | 2026-04-01 | query()、内置工具、Subagents、Session 续接，实战：多 Agent 协作 + 交互式 CLI |
+| Subagents（子代理） | ✅ 已完成 | 2026-04-01 | 内置 Explore/Plan/general-purpose，自定义 AGENT.md，memory 跨会话记忆，与 Skills 集成 |
 
 ---
 
@@ -91,11 +91,11 @@
 
 ```
 第 1 步：Hooks 系统           ← ✅ 已完成
-第 2 步：Settings / 权限管理  ← 当前位置
-第 3 步：Slash Commands       ← 提升工作效率
-第 4 步：Claude API           ← 构建自己的应用
-第 5 步：Agent SDK            ← 进阶，构建自定义 Agent
-第 6 步：Subagents            ← 高级，多 Agent 协作
+第 2 步：Settings / 权限管理  ← ✅ 已完成
+第 3 步：Slash Commands       ← ✅ 已完成
+第 4 步：Claude API           ← ✅ 已完成
+第 5 步：Agent SDK            ← ✅ 已完成
+第 6 步：Subagents            ← ✅ 已完成
 ```
 
 ---
@@ -106,3 +106,10 @@
 - 梳理了 Claude Code 完整学习路线
 - MCP 已掌握，确定下一步学习 Hooks 系统
 - Hooks 系统学习完成：Stop/PreToolUse/PostToolUse/UserPromptSubmit 四种事件，command 类型 hook，exit code 控制阻断，systemMessage 输出格式，三个实战 hook 全部验证通过
+
+### 2026-04-01
+- Settings/权限管理：三层配置文件，通配符权限规则，settings.local.json 从48条精简到16条
+- Slash Commands/Skills：SKILL.md frontmatter，$ARGUMENTS，context:fork，创建 go-review/commit/daily 三个实战 skill
+- Claude API：Anthropic Go SDK，Vision API，并行调用，优雅降级，实战集成到 HTTP 服务
+- Agent SDK：query() 函数，内置工具，Subagents（AgentDefinition），Session 续接（resume），实战：多 Agent 协作 + 交互式 CLI
+- Subagents：内置 Explore/Plan/general-purpose，自定义 AGENT.md，memory 跨会话记忆，创建 go-expert subagent 并集成进 /go-review skill
