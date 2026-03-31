@@ -5,9 +5,9 @@
 | 模块 | 状态 | 完成日期 | 备注 |
 |------|------|---------|------|
 | MCP（Model Context Protocol） | ✅ 已完成 | 2026-03-30 | 连接外部工具/服务 |
-| Hooks 系统 | 🔲 待学习 | - | - |
-| Settings / 权限管理 | 🔲 待学习 | - | - |
-| Slash Commands | 🔲 待学习 | - | - |
+| Hooks 系统 | ✅ 已完成 | 2026-03-30 | 事件触发钩子，Stop/PreToolUse/PostToolUse/UserPromptSubmit |
+| Settings / 权限管理 | ✅ 已完成 | 2026-03-30 | 三层配置文件，allow/deny/ask 权限规则，通配符语法 |
+| Slash Commands | 🔄 学习中 | - | - |
 | Claude API | 🔲 待学习 | - | - |
 | Agent SDK | 🔲 待学习 | - | - |
 | Subagents（子代理） | 🔲 待学习 | - | - |
@@ -90,8 +90,8 @@
 ## 推荐学习顺序
 
 ```
-第 1 步：Hooks 系统           ← 当前位置，实用性强，立刻能用上
-第 2 步：Settings / 权限管理  ← 理解配置体系
+第 1 步：Hooks 系统           ← ✅ 已完成
+第 2 步：Settings / 权限管理  ← 当前位置
 第 3 步：Slash Commands       ← 提升工作效率
 第 4 步：Claude API           ← 构建自己的应用
 第 5 步：Agent SDK            ← 进阶，构建自定义 Agent
@@ -105,3 +105,4 @@
 ### 2026-03-30
 - 梳理了 Claude Code 完整学习路线
 - MCP 已掌握，确定下一步学习 Hooks 系统
+- Hooks 系统学习完成：Stop/PreToolUse/PostToolUse/UserPromptSubmit 四种事件，command 类型 hook，exit code 控制阻断，systemMessage 输出格式，三个实战 hook 全部验证通过
