@@ -7,9 +7,9 @@
 | MCP（Model Context Protocol） | ✅ 已完成 | 2026-03-30 | 连接外部工具/服务 |
 | Hooks 系统 | ✅ 已完成 | 2026-03-30 | 事件触发钩子，Stop/PreToolUse/PostToolUse/UserPromptSubmit |
 | Settings / 权限管理 | ✅ 已完成 | 2026-03-30 | 三层配置文件，allow/deny/ask 权限规则，通配符语法 |
-| Slash Commands | 🔄 学习中 | - | - |
-| Claude API | 🔲 待学习 | - | - |
-| Agent SDK | 🔲 待学习 | - | - |
+| Slash Commands | ✅ 已完成 | 2026-03-31 | Skills 系统，frontmatter，$ARGUMENTS，动态注入，go-review/commit/daily 三个实战 skill |
+| Claude API | ✅ 已完成 | 2026-03-31 | Messages API、Vision API、并行调用、优雅降级，实战：图片转 ASCII 同时生成描述 |
+| Agent SDK | 🔄 学习中 | - | - |
 | Subagents（子代理） | 🔲 待学习 | - | - |
 
 ---
