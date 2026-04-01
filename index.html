@@ -187,6 +187,59 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── 结果 Tab ── */
+  .tab-bar {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #222;
+    background: #1c1c1c;
+  }
+  .tab-btn {
+    padding: .45rem 1rem;
+    font-size: .75rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #555;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn.active { color: #6ee7b7; border-bottom-color: #6ee7b7; }
+  .tab-btn:hover:not(.active) { color: #aaa; }
+
+  /* ── 文本 ASCII 展示 ── */
+  #text-panel {
+    background: #111;
+    padding: .75rem;
+    overflow: auto;
+    max-height: 440px;
+    display: none;
+  }
+  #text-panel pre {
+    font-family: 'Courier New', monospace;
+    font-size: .55rem;
+    line-height: 1.1;
+    color: #e0e0e0;
+    white-space: pre;
+    margin: 0;
+  }
+
+  /* ── 智能推荐按钮 ── */
+  #suggest-btn {
+    background: none;
+    border: 1px solid #a78bfa;
+    color: #a78bfa;
+    border-radius: 7px;
+    padding: .4rem .9rem;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  #suggest-btn:hover { background: rgba(167,139,250,.1); }
+  #suggest-btn:disabled { opacity: .4; cursor: not-allowed; }
+
   @media (max-width: 600px) {
     #preview-area.visible { grid-template-columns: 1fr; }
     .controls { gap: 1rem; }
@@ -238,6 +291,10 @@
       <span style="font-size:.85rem;color:#ddd;">彩色模式</span>
     </label>
   </div>
+  <div class="ctrl-group" style="justify-content:flex-end;">
+    <label>&nbsp;</label>
+    <button id="suggest-btn" disabled title="需要设置 ANTHROPIC_API_KEY">✨ 智能推荐</button>
+  </div>
 </div>
 
 <!-- 状态栏 -->
@@ -250,8 +307,12 @@
     <img id="orig-img" src="" alt="原图">
   </div>
   <div class="panel" id="result-panel">
-    <div class="panel-title">ASCII 字符画</div>
-    <img id="result-img" src="" alt="结果">
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-img" onclick="switchTab('img')">图片</button>
+      <button class="tab-btn" id="tab-text" onclick="switchTab('text')">文本</button>
+    </div>
+    <img id="result-img" src="" alt="结果" style="width:100%;display:block;object-fit:contain;max-height:440px;background:#111;">
+    <div id="text-panel"><pre id="ascii-text"></pre></div>
     <div id="loading-overlay">
       <span><span class="spinner"></span>转换中…</span>
     </div>
@@ -260,9 +321,13 @@
 
 <!-- 下载按钮 -->
 <button id="download-btn">⬇&nbsp; 下载 PNG</button>
+<button id="copy-btn" style="display:none;margin-top:1.25rem;margin-left:.75rem;background:none;border:1px solid #6ee7b7;color:#6ee7b7;border-radius:9px;padding:.65rem 1.5rem;font-size:.9rem;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:opacity .2s;">📋 复制文本</button>
 
 <script>
 (() => {
+  let currentTextResult = '';
+  let isFetchingText = false;
+
   const dropZone      = document.getElementById('drop-zone');
   const fileInput     = document.getElementById('file-input');
   const widthRange    = document.getElementById('width-range');
@@ -377,6 +442,12 @@
 
       resultImg.src = resultBlobURL;
       downloadBtn.style.display = 'inline-block';
+      document.getElementById('copy-btn').style.display = 'inline-block';
+      currentTextResult = ''; // 参数变化，清除旧文本缓存
+      document.getElementById('ascii-text').textContent = '';
+      if (document.getElementById('tab-text').classList.contains('active') && currentFile && !isFetchingText) {
+        fetchTextResult();
+      }
       setStatus('✅ 转换完成');
     } catch (err) {
       setStatus('❌ 请求失败：' + err.message, true);
@@ -399,6 +470,104 @@
     statusEl.innerHTML = html;
     statusEl.className = isError ? 'error' : '';
   }
+
+  // ── Tab 切换 ──
+  window.switchTab = function(tab) {
+    const imgEl = document.getElementById('result-img');
+    const textPanel = document.getElementById('text-panel');
+    document.getElementById('tab-img').classList.toggle('active', tab === 'img');
+    document.getElementById('tab-text').classList.toggle('active', tab === 'text');
+    imgEl.style.display = tab === 'img' ? 'block' : 'none';
+    textPanel.style.display = tab === 'text' ? 'block' : 'none';
+    // 切到文本 Tab 时如果还没有数据则触发获取
+    if (tab === 'text' && currentTextResult === '' && !isFetchingText && currentFile) {
+      fetchTextResult();
+    }
+  };
+
+  // ── 获取文本结果 ──
+  async function fetchTextResult() {
+    if (!currentFile) return;
+    isFetchingText = true;
+    const chars = document.getElementById('charset-select').value === 'custom'
+      ? (document.getElementById('custom-chars').value || '@#S%?*+;:,. ')
+      : document.getElementById('charset-select').value;
+    const form = new FormData();
+    form.append('image', currentFile);
+    form.append('width', document.getElementById('width-range').value);
+    form.append('chars', chars);
+    try {
+      const resp = await fetch('/convert/text', { method: 'POST', body: form });
+      if (resp.ok) {
+        currentTextResult = await resp.text();
+        document.getElementById('ascii-text').textContent = currentTextResult;
+      }
+    } catch (e) {
+      console.warn('文本获取失败', e);
+      document.getElementById('ascii-text').textContent = '⚠️ 文本加载失败，请重试';
+    } finally {
+      isFetchingText = false;
+    }
+  }
+
+  // ── 复制文本 ──
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    if (!currentTextResult) return;
+    navigator.clipboard.writeText(currentTextResult).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✅ 已复制';
+      setTimeout(() => { btn.textContent = '📋 复制文本'; }, 2000);
+    });
+  });
+
+  // ── 检查 suggest 是否可用 ──
+  fetch('/convert/suggest', { method: 'POST', body: new FormData() })
+    .then(r => { if (r.status !== 503) { document.getElementById('suggest-btn').disabled = false; } })
+    .catch(() => {});
+
+  // ── 智能推荐 ──
+  document.getElementById('suggest-btn').addEventListener('click', async () => {
+    if (!currentFile) return;
+    const btn = document.getElementById('suggest-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ 分析中…';
+    const form = new FormData();
+    form.append('image', currentFile);
+    try {
+      const resp = await fetch('/convert/suggest', { method: 'POST', body: form });
+      if (!resp.ok) { throw new Error(await resp.text()); }
+      const params = await resp.json();
+      // 填入推荐参数
+      document.getElementById('width-range').value = params.width;
+      document.getElementById('width-val').textContent = params.width;
+      // 尝试匹配字符集选项
+      const sel = document.getElementById('charset-select');
+      let matched = false;
+      for (const opt of sel.options) {
+        if (opt.value === params.chars) { sel.value = params.chars; matched = true; break; }
+      }
+      if (!matched) {
+        sel.value = 'custom';
+        document.getElementById('custom-wrap').style.display = 'flex';
+        document.getElementById('custom-chars').value = params.chars;
+      }
+      if (typeof params.colorful !== 'undefined') {
+        const colorfulToggle = document.getElementById('colorful-toggle');
+        if (colorfulToggle) {
+          colorfulToggle.checked = params.colorful;
+        }
+      }
+      setStatus(`✨ 推荐：${params.reason || '参数已更新'}`);
+      // 立即触发转换
+      currentTextResult = '';
+      doConvert();
+    } catch (e) {
+      setStatus('❌ 推荐失败：' + e.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ 智能推荐';
+    }
+  });
 })();
 </script>
 </body>

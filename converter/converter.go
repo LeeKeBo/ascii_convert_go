@@ -7,6 +7,7 @@ import (
 	"image/draw"
 	"image/png"
 	"math"
+	"strings"
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
@@ -47,6 +48,25 @@ func Convert(src image.Image, opt Options) ([]byte, error) {
 	grid := buildCharGrid(src, opt.Width, opt.CharSet)
 	out := renderToImage(grid, opt.Colorful)
 	return encodePNG(out)
+}
+
+// ConvertText 将图片转换为纯文本 ASCII 字符画，返回多行字符串
+func ConvertText(src image.Image, opt Options) (string, error) {
+	if opt.Width <= 0 {
+		opt.Width = 100
+	}
+	if opt.CharSet == "" {
+		opt.CharSet = DefaultCharSet
+	}
+	grid := buildCharGrid(src, opt.Width, opt.CharSet)
+	var sb strings.Builder
+	for _, row := range grid {
+		for _, cell := range row {
+			sb.WriteRune(cell.ch)
+		}
+		sb.WriteByte('\n')
+	}
+	return sb.String(), nil
 }
 
 // buildCharGrid 将图片映射为二维字符格网格（区域均值采样）
