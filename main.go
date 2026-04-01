@@ -81,6 +81,7 @@ func handleConvert(c *gin.Context) {
 		width = 100
 	}
 	chars := c.DefaultPostForm("chars", "")
+	colorful := c.DefaultPostForm("colorful", "false") == "true"
 
 	// 4. 并行执行：ASCII 转换 + Claude Vision 描述
 	var (
@@ -94,7 +95,7 @@ func handleConvert(c *gin.Context) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		pngBytes, convertErr = ConvertToASCII(src, ConvertOptions{Width: width, CharSet: chars})
+		pngBytes, convertErr = ConvertToASCII(src, ConvertOptions{Width: width, CharSet: chars, Colorful: colorful})
 	}()
 
 	if desc != nil {

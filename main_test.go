@@ -19,6 +19,20 @@ func newSolidImage(w, h int, c color.Color) image.Image {
 	return img
 }
 
+// assertValidPNG 验证字节流是合法 PNG
+func assertValidPNG(t *testing.T, data []byte, label string) {
+	t.Helper()
+	if len(data) == 0 {
+		t.Fatalf("%s: 返回空字节流", label)
+	}
+	pngMagic := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+	for i, b := range pngMagic {
+		if data[i] != b {
+			t.Fatalf("%s: 不是合法 PNG，第 %d 字节期望 %02x，实际 %02x", label, i, b, data[i])
+		}
+	}
+}
+
 // ── ToGray 测试 ──
 
 func TestToGray_Black(t *testing.T) {
@@ -69,12 +83,7 @@ func TestConvertToASCII_ReturnsPNG(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ConvertToASCII 返回错误: %v", err)
 	}
-	pngMagic := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
-	for i, b := range pngMagic {
-		if data[i] != b {
-			t.Fatalf("输出不是合法 PNG，第 %d 字节期望 %02x，实际 %02x", i, b, data[i])
-		}
-	}
+	assertValidPNG(t, data, "标准模式")
 }
 
 func TestConvertToASCII_Defaults(t *testing.T) {
@@ -82,5 +91,57 @@ func TestConvertToASCII_Defaults(t *testing.T) {
 	_, err := ConvertToASCII(img, ConvertOptions{})
 	if err != nil {
 		t.Fatalf("默认参数不应报错: %v", err)
+	}
+}
+
+func TestConvertToASCII_ColorfulMode(t *testing.T) {
+	img := newSolidImage(100, 80, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	data, err := ConvertToASCII(img, ConvertOptions{Width: 40, Colorful: true})
+	if err != nil {
+		t.Fatalf("彩色模式不应报错: %v", err)
+	}
+	assertValidPNG(t, data, "彩色模式")
+}
+
+func TestConvertToASCII_RegionSampling(t *testing.T) {
+	// 纯白图，区域均值应得到最亮字符（空格）
+	img := newSolidImage(100, 100, color.White)
+	data, err := ConvertToASCII(img, ConvertOptions{Width: 10, CharSet: "@#S%?*+;:,. "})
+	if err != nil {
+		t.Fatalf("区域采样不应报错: %v", err)
+	}
+	assertValidPNG(t, data, "纯白区域采样")
+	// 纯黑图，区域均值应得到最暗字符（@）
+	imgBlack := newSolidImage(100, 100, color.Black)
+	dataBlack, err := ConvertToASCII(imgBlack, ConvertOptions{Width: 10, CharSet: "@#S%?*+;:,. "})
+	if err != nil {
+		t.Fatalf("纯黑区域采样不应报错: %v", err)
+	}
+	assertValidPNG(t, dataBlack, "纯黑区域采样")
+}
+
+func TestConvertToASCII_ColorfulDiffersFromBW(t *testing.T) {
+	img := newSolidImage(100, 80, color.RGBA{R: 200, G: 50, B: 50, A: 255})
+
+	bwData, err := ConvertToASCII(img, ConvertOptions{Width: 20, Colorful: false})
+	if err != nil {
+		t.Fatalf("黑白模式失败: %v", err)
+	}
+	colorData, err := ConvertToASCII(img, ConvertOptions{Width: 20, Colorful: true})
+	if err != nil {
+		t.Fatalf("彩色模式失败: %v", err)
+	}
+	// 彩色和黑白输出的 PNG 字节应不同（颜色信息不同）
+	if len(bwData) == len(colorData) {
+		same := true
+		for i := range bwData {
+			if bwData[i] != colorData[i] {
+				same = false
+				break
+			}
+		}
+		if same {
+			t.Error("彩色模式和黑白模式输出完全相同，彩色渲染未生效")
+		}
 	}
 }
