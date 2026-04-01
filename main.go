@@ -27,6 +27,9 @@ var indexHTML string
 // desc 是全局 Claude Vision 客户端，启动时初始化一次
 var desc *describer.Client
 
+// Version 在编译时通过 -ldflags 注入，默认为 "dev"
+var Version = "dev"
+
 func main() {
 	// 初始化 Claude 客户端（自动读取 ANTHROPIC_API_KEY）
 	if os.Getenv("ANTHROPIC_API_KEY") != "" {
@@ -194,9 +197,6 @@ func handleSuggest(c *gin.Context) {
 
 	c.JSON(http.StatusOK, params)
 }
-
-// Version 在编译时通过 -ldflags 注入，默认为 "dev"
-var Version = "dev"
 
 // handleHealth 健康检查接口，供 Docker healthcheck 和监控使用
 func handleHealth(c *gin.Context) {

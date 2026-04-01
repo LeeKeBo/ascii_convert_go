@@ -175,11 +175,17 @@ func TestHealthEndpoint(t *testing.T) {
 	r.GET("/health", handleHealth)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/health", nil)
+	req, err := http.NewRequest("GET", "/health", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("期望状态码 200，实际 %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "application/json; charset=utf-8" {
+		t.Errorf("期望 Content-Type application/json; charset=utf-8，实际 %q", ct)
 	}
 
 	var body map[string]string
@@ -189,7 +195,7 @@ func TestHealthEndpoint(t *testing.T) {
 	if body["status"] != "ok" {
 		t.Errorf("期望 status=ok，实际 %q", body["status"])
 	}
-	if body["version"] == "" {
-		t.Error("version 字段不能为空")
+	if body["version"] != "dev" {
+		t.Errorf("期望 version=dev，实际 %q", body["version"])
 	}
 }
