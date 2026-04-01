@@ -326,7 +326,7 @@
 <script>
 (() => {
   let currentTextResult = '';
-  let isSuggestAvailable = false;
+  let isFetchingText = false;
 
   const dropZone      = document.getElementById('drop-zone');
   const fileInput     = document.getElementById('file-input');
@@ -444,6 +444,10 @@
       downloadBtn.style.display = 'inline-block';
       document.getElementById('copy-btn').style.display = 'inline-block';
       currentTextResult = ''; // 参数变化，清除旧文本缓存
+      document.getElementById('ascii-text').textContent = '';
+      if (document.getElementById('tab-text').classList.contains('active') && currentFile) {
+        fetchTextResult();
+      }
       setStatus('✅ 转换完成');
     } catch (err) {
       setStatus('❌ 请求失败：' + err.message, true);
@@ -476,7 +480,7 @@
     imgEl.style.display = tab === 'img' ? 'block' : 'none';
     textPanel.style.display = tab === 'text' ? 'block' : 'none';
     // 切到文本 Tab 时如果还没有数据则触发获取
-    if (tab === 'text' && currentTextResult === '' && currentFile) {
+    if (tab === 'text' && currentTextResult === '' && !isFetchingText && currentFile) {
       fetchTextResult();
     }
   };
@@ -484,6 +488,7 @@
   // ── 获取文本结果 ──
   async function fetchTextResult() {
     if (!currentFile) return;
+    isFetchingText = true;
     const chars = document.getElementById('charset-select').value === 'custom'
       ? (document.getElementById('custom-chars').value || '@#S%?*+;:,. ')
       : document.getElementById('charset-select').value;
@@ -499,6 +504,9 @@
       }
     } catch (e) {
       console.warn('文本获取失败', e);
+      document.getElementById('ascii-text').textContent = '⚠️ 文本加载失败，请重试';
+    } finally {
+      isFetchingText = false;
     }
   }
 
@@ -514,7 +522,7 @@
 
   // ── 检查 suggest 是否可用 ──
   fetch('/convert/suggest', { method: 'POST', body: new FormData() })
-    .then(r => { if (r.status !== 503) { isSuggestAvailable = true; document.getElementById('suggest-btn').disabled = false; } })
+    .then(r => { if (r.status !== 503) { document.getElementById('suggest-btn').disabled = false; } })
     .catch(() => {});
 
   // ── 智能推荐 ──
@@ -544,7 +552,10 @@
         document.getElementById('custom-chars').value = params.chars;
       }
       if (typeof params.colorful !== 'undefined') {
-        document.getElementById('colorful-toggle').checked = params.colorful;
+        const colorfulToggle = document.getElementById('colorful-toggle');
+        if (colorfulToggle) {
+          colorfulToggle.checked = params.colorful;
+        }
       }
       setStatus(`✨ 推荐：${params.reason || '参数已更新'}`);
       // 立即触发转换
