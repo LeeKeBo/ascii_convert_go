@@ -119,3 +119,29 @@ func TestConvertToASCII_RegionSampling(t *testing.T) {
 	}
 	assertValidPNG(t, dataBlack, "纯黑区域采样")
 }
+
+func TestConvertToASCII_ColorfulDiffersFromBW(t *testing.T) {
+	img := newSolidImage(100, 80, color.RGBA{R: 200, G: 50, B: 50, A: 255})
+
+	bwData, err := ConvertToASCII(img, ConvertOptions{Width: 20, Colorful: false})
+	if err != nil {
+		t.Fatalf("黑白模式失败: %v", err)
+	}
+	colorData, err := ConvertToASCII(img, ConvertOptions{Width: 20, Colorful: true})
+	if err != nil {
+		t.Fatalf("彩色模式失败: %v", err)
+	}
+	// 彩色和黑白输出的 PNG 字节应不同（颜色信息不同）
+	if len(bwData) == len(colorData) {
+		same := true
+		for i := range bwData {
+			if bwData[i] != colorData[i] {
+				same = false
+				break
+			}
+		}
+		if same {
+			t.Error("彩色模式和黑白模式输出完全相同，彩色渲染未生效")
+		}
+	}
+}

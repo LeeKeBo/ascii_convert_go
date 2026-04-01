@@ -109,7 +109,7 @@ func buildCharGrid(img image.Image, width int, charSet string) [][]charCell {
 }
 
 // renderToImage 将字符网格渲染为图片
-// colorful=false：黑底白字；colorful=true：黑底彩字（彩色在 Task 3 实现）
+// colorful=false：黑底白字；colorful=true：黑底彩字（字符颜色与原图对应区域颜色一致）
 func renderToImage(grid [][]charCell, colorful bool) *image.RGBA {
 	if len(grid) == 0 {
 		return image.NewRGBA(image.Rect(0, 0, 1, 1))
@@ -126,8 +126,13 @@ func renderToImage(grid [][]charCell, colorful bool) *image.RGBA {
 	}
 	for row, line := range grid {
 		for col, cell := range line {
-			// 暂时全部用白色（彩色在 Task 3 实现）
-			d.Src = image.NewUniform(color.White)
+			var fg color.Color
+			if colorful {
+				fg = cell.color
+			} else {
+				fg = color.White
+			}
+			d.Src = image.NewUniform(fg)
 			d.Dot = fixed.P(col*charW, row*charH+(charH-2))
 			d.DrawString(string(cell.ch))
 		}
