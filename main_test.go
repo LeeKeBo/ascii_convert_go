@@ -102,3 +102,20 @@ func TestConvertToASCII_ColorfulMode(t *testing.T) {
 	}
 	assertValidPNG(t, data, "彩色模式")
 }
+
+func TestConvertToASCII_RegionSampling(t *testing.T) {
+	// 纯白图，区域均值应得到最亮字符（空格）
+	img := newSolidImage(100, 100, color.White)
+	data, err := ConvertToASCII(img, ConvertOptions{Width: 10, CharSet: "@#S%?*+;:,. "})
+	if err != nil {
+		t.Fatalf("区域采样不应报错: %v", err)
+	}
+	assertValidPNG(t, data, "纯白区域采样")
+	// 纯黑图，区域均值应得到最暗字符（@）
+	imgBlack := newSolidImage(100, 100, color.Black)
+	dataBlack, err := ConvertToASCII(imgBlack, ConvertOptions{Width: 10, CharSet: "@#S%?*+;:,. "})
+	if err != nil {
+		t.Fatalf("纯黑区域采样不应报错: %v", err)
+	}
+	assertValidPNG(t, dataBlack, "纯黑区域采样")
+}
