@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"sync"
 
+	"ascii_convert_go/converter"
 	"ascii_convert_go/describer"
 
 	"github.com/gin-gonic/gin"
@@ -40,6 +41,8 @@ func main() {
 
 	r.GET("/", handleIndex)
 	r.POST("/convert", handleConvert)
+	r.POST("/convert/text", handleConvertText)
+	r.POST("/convert/suggest", handleSuggest)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("服务器启动失败: %v", err)
@@ -123,4 +126,71 @@ func handleConvert(c *gin.Context) {
 		"png":         "data:image/png;base64," + base64.StdEncoding.EncodeToString(pngBytes),
 		"description": description,
 	})
+}
+
+// handleConvertText 接收上传图片，返回纯文本 ASCII 字符画
+func handleConvertText(c *gin.Context) {
+	file, _, err := c.Request.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少 image 字段: " + err.Error()})
+		return
+	}
+	defer file.Close()
+
+	imgBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件失败: " + err.Error()})
+		return
+	}
+
+	src, _, err := image.Decode(bytes.NewReader(imgBytes))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "图片解码失败: " + err.Error()})
+		return
+	}
+
+	width, err := strconv.Atoi(c.DefaultPostForm("width", "100"))
+	if err != nil || width <= 0 {
+		width = 100
+	}
+	chars := c.DefaultPostForm("chars", "")
+
+	text, err := converter.ConvertText(src, converter.Options{Width: width, CharSet: chars})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "转换失败: " + err.Error()})
+		return
+	}
+
+	c.Header("Content-Type", "text/plain; charset=utf-8")
+	c.String(http.StatusOK, text)
+}
+
+// handleSuggest 接收上传图片，返回 Claude Vision 推荐的转换参数
+func handleSuggest(c *gin.Context) {
+	if desc == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "ANTHROPIC_API_KEY 未设置，AI 推荐功能不可用"})
+		return
+	}
+
+	file, header, err := c.Request.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少 image 字段: " + err.Error()})
+		return
+	}
+	defer file.Close()
+
+	imgBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取文件失败: " + err.Error()})
+		return
+	}
+
+	mediaType := header.Header.Get("Content-Type")
+	params, err := desc.Suggest(c.Request.Context(), imgBytes, mediaType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI 推荐失败: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, params)
 }
