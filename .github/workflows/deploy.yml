@@ -1,0 +1,48 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+
+      - name: Run tests
+        run: go test ./... -timeout 60s
+
+      - name: Build verification
+        run: go build ./...
+
+      - name: Deploy to ECS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ECS_HOST }}
+          username: ${{ secrets.ECS_USER }}
+          key: ${{ secrets.ECS_SSH_KEY }}
+          timeout: 120s
+          script: |
+            set -e
+            cd ${{ secrets.ECS_DEPLOY_PATH }}
+            git pull origin main
+            VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
+            docker compose up -d --build --build-arg VERSION=${VERSION}
+            echo "Waiting for health check..."
+            sleep 15
+            curl -sf http://localhost:8080/health || (echo "Health check failed!" && exit 1)
+            echo "Deploy successful!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Deploy failed for commit ${{ github.sha }}"
+          # 如需钉钉/企微通知，在此添加 curl 推送 Webhook
