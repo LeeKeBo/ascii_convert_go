@@ -9,8 +9,9 @@ RUN go mod download
 
 # 复制源码并编译静态二进制
 COPY . .
+ARG VERSION=dev
 RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags="-s -w -X main.Version=$(git describe --tags --always --dirty 2>/dev/null || echo dev)" \
+    -ldflags="-s -w -X main.Version=${VERSION}" \
     -o /ascii_convert_go .
 
 # ── 运行阶段 ──────────────────────────────────────────────
@@ -20,10 +21,10 @@ FROM alpine:3.19
 RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /app
-COPY --from=builder /ascii_convert_go .
 
-# 非 root 用户运行
-RUN adduser -D -H appuser && chown appuser /app/ascii_convert_go
+# 非 root 用户运行（禁用登录 shell 以增强安全性）
+RUN adduser -D -H -s /sbin/nologin appuser
+COPY --from=builder --chown=appuser:appuser /ascii_convert_go /app/ascii_convert_go
 USER appuser
 
 EXPOSE 8080

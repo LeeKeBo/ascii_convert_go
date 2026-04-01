@@ -1,0 +1,7 @@
+.git
+.worktrees
+*.test
+*.out
+.env*
+.idea
+.vscode
