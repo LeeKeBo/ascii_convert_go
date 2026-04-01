@@ -161,7 +161,6 @@ func handleConvertText(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Type", "text/plain; charset=utf-8")
 	c.String(http.StatusOK, text)
 }
 
