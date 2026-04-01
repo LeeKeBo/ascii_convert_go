@@ -35,10 +35,10 @@ jobs:
             cd ${{ secrets.ECS_DEPLOY_PATH }}
             git pull origin main
             VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo dev)
-            docker compose up -d --build --build-arg VERSION=${VERSION}
+            VERSION=${VERSION} docker compose up -d --build
             echo "Waiting for health check..."
             sleep 15
-            curl -sf http://localhost:8080/health || (echo "Health check failed!" && exit 1)
+            curl -sf http://localhost/health || (echo "Health check failed!" && exit 1)
             echo "Deploy successful!"
 
       - name: Notify on failure
