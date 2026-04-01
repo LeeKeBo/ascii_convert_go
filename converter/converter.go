@@ -17,14 +17,18 @@ import (
 // DefaultCharSet 默认字符集（从暗到亮）
 const DefaultCharSet = `@#S%?*+;:,. `
 
+// UnicodeCharSet 精细字符集，使用 Unicode 半块字符（从暗到亮）
+const UnicodeCharSet = "█▓▒░▐▌▄▀+;:,. "
+
 // basicfont.Face7x13 每个字符的像素尺寸
 const charW = 7
 const charH = 13
 
 // Options 转换参数
 type Options struct {
-	Width   int    // 输出字符列数，<=0 时使用默认值 100
-	CharSet string // 字符集（从暗到亮），空时使用 DefaultCharSet
+	Width    int    // 输出字符列数，<=0 时使用默认值 100
+	CharSet  string // 字符集（从暗到亮），空时使用 DefaultCharSet
+	Colorful bool   // 是否启用彩色渲染（字符颜色与原图对应区域颜色一致）
 }
 
 // Convert 将图片转换为 ASCII 字符画，返回 PNG 字节流

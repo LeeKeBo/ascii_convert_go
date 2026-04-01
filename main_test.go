@@ -84,3 +84,21 @@ func TestConvertToASCII_Defaults(t *testing.T) {
 		t.Fatalf("默认参数不应报错: %v", err)
 	}
 }
+
+func TestConvertToASCII_ColorfulMode(t *testing.T) {
+	img := newSolidImage(100, 80, color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	data, err := ConvertToASCII(img, ConvertOptions{Width: 40, Colorful: true})
+	if err != nil {
+		t.Fatalf("彩色模式不应报错: %v", err)
+	}
+	// 验证输出是合法 PNG
+	pngMagic := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+	for i, b := range pngMagic {
+		if data[i] != b {
+			t.Fatalf("彩色输出不是合法 PNG，第 %d 字节期望 %02x，实际 %02x", i, b, data[i])
+		}
+	}
+	if len(data) == 0 {
+		t.Fatal("彩色模式返回空字节流")
+	}
+}
