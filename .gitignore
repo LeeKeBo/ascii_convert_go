@@ -21,3 +21,4 @@ mcp-server
 
 # Git worktrees
 .worktrees/
+.env
