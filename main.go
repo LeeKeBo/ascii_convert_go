@@ -43,6 +43,7 @@ func main() {
 	r.POST("/convert", handleConvert)
 	r.POST("/convert/text", handleConvertText)
 	r.POST("/convert/suggest", handleSuggest)
+	r.GET("/health", handleHealth)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("服务器启动失败: %v", err)
@@ -192,4 +193,15 @@ func handleSuggest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, params)
+}
+
+// Version 在编译时通过 -ldflags 注入，默认为 "dev"
+var Version = "dev"
+
+// handleHealth 健康检查接口，供 Docker healthcheck 和监控使用
+func handleHealth(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "ok",
+		"version": Version,
+	})
 }
