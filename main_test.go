@@ -1,12 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"image"
 	"image/color"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"ascii_convert_go/converter"
+
+	"github.com/gin-gonic/gin"
 )
 
 // newSolidImage 创建纯色测试图片
@@ -161,5 +166,36 @@ func TestConvertText_ReturnString(t *testing.T) {
 		if len(line) != 20 {
 			t.Errorf("第 %d 行长度期望 20，实际 %d", i, len(line))
 		}
+	}
+}
+
+func TestHealthEndpoint(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	r.GET("/health", handleHealth)
+
+	w := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", "/health", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("期望状态码 200，实际 %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "application/json; charset=utf-8" {
+		t.Errorf("期望 Content-Type application/json; charset=utf-8，实际 %q", ct)
+	}
+
+	var body map[string]string
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatalf("响应不是合法 JSON: %v", err)
+	}
+	if body["status"] != "ok" {
+		t.Errorf("期望 status=ok，实际 %q", body["status"])
+	}
+	if body["version"] != "dev" {
+		t.Errorf("期望 version=dev，实际 %q", body["version"])
 	}
 }
