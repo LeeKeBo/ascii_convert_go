@@ -17,7 +17,7 @@ import (
 // DefaultCharSet 默认字符集（从暗到亮）
 const DefaultCharSet = `@#S%?*+;:,. `
 
-// UnicodeCharSet 精细字符集，使用 Unicode 半块字符（从暗到亮）
+// UnicodeCharSet 精细字符集，使用 Unicode 块状图形字符（需按 rune 索引，Task 2 后生效）（从暗到亮）
 const UnicodeCharSet = "█▓▒░▐▌▄▀+;:,. "
 
 // basicfont.Face7x13 每个字符的像素尺寸

@@ -19,6 +19,20 @@ func newSolidImage(w, h int, c color.Color) image.Image {
 	return img
 }
 
+// assertValidPNG 验证字节流是合法 PNG
+func assertValidPNG(t *testing.T, data []byte, label string) {
+	t.Helper()
+	if len(data) == 0 {
+		t.Fatalf("%s: 返回空字节流", label)
+	}
+	pngMagic := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+	for i, b := range pngMagic {
+		if data[i] != b {
+			t.Fatalf("%s: 不是合法 PNG，第 %d 字节期望 %02x，实际 %02x", label, i, b, data[i])
+		}
+	}
+}
+
 // ── ToGray 测试 ──
 
 func TestToGray_Black(t *testing.T) {
@@ -69,12 +83,7 @@ func TestConvertToASCII_ReturnsPNG(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ConvertToASCII 返回错误: %v", err)
 	}
-	pngMagic := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
-	for i, b := range pngMagic {
-		if data[i] != b {
-			t.Fatalf("输出不是合法 PNG，第 %d 字节期望 %02x，实际 %02x", i, b, data[i])
-		}
-	}
+	assertValidPNG(t, data, "标准模式")
 }
 
 func TestConvertToASCII_Defaults(t *testing.T) {
@@ -91,14 +100,5 @@ func TestConvertToASCII_ColorfulMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("彩色模式不应报错: %v", err)
 	}
-	// 验证输出是合法 PNG
-	pngMagic := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
-	for i, b := range pngMagic {
-		if data[i] != b {
-			t.Fatalf("彩色输出不是合法 PNG，第 %d 字节期望 %02x，实际 %02x", i, b, data[i])
-		}
-	}
-	if len(data) == 0 {
-		t.Fatal("彩色模式返回空字节流")
-	}
+	assertValidPNG(t, data, "彩色模式")
 }
