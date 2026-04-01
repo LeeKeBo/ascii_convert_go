@@ -276,6 +276,7 @@
   const resultImg     = document.getElementById('result-img');
   const loadingOverlay= document.getElementById('loading-overlay');
   const downloadBtn   = document.getElementById('download-btn');
+  const colorfulToggle= document.getElementById('colorful-toggle');
 
   let currentFile   = null;
   let resultBlobURL = null;
@@ -294,7 +295,7 @@
 
   customChars.addEventListener('input', () => scheduleConvert(400));
 
-  document.getElementById('colorful-toggle').addEventListener('change', () => scheduleConvert(0));
+  colorfulToggle.addEventListener('change', () => scheduleConvert(0));
 
   // ── 拖拽 & 点击上传 ──
   dropZone.addEventListener('click', () => fileInput.click());
@@ -353,7 +354,7 @@
       ? (customChars.value || '@#S%?*+;:,. ')
       : charsetSel.value;
 
-    const colorful = document.getElementById('colorful-toggle').checked;
+    const colorful = colorfulToggle.checked;
     const form = new FormData();
     form.append('image', currentFile);
     form.append('width', widthRange.value);
