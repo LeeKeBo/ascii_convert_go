@@ -445,7 +445,7 @@
       document.getElementById('copy-btn').style.display = 'inline-block';
       currentTextResult = ''; // 参数变化，清除旧文本缓存
       document.getElementById('ascii-text').textContent = '';
-      if (document.getElementById('tab-text').classList.contains('active') && currentFile) {
+      if (document.getElementById('tab-text').classList.contains('active') && currentFile && !isFetchingText) {
         fetchTextResult();
       }
       setStatus('✅ 转换完成');
