@@ -221,6 +221,7 @@
     <label>字符集</label>
     <select id="charset-select">
       <option value="@#S%?*+;:,. ">默认</option>
+      <option value="█▓▒░▐▌▄▀+;:,. ">精细（Unicode）</option>
       <option value="@%#*+=-:. ">简洁</option>
       <option value=" .:-=+*#%@">白底黑字</option>
       <option value="custom">自定义…</option>
@@ -229,6 +230,13 @@
   <div class="ctrl-group" id="custom-wrap">
     <label>自定义字符集（从暗到亮）</label>
     <input type="text" id="custom-chars" placeholder="@#*+:. " style="width:200px">
+  </div>
+  <div class="ctrl-group">
+    <label>渲染模式</label>
+    <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+      <input type="checkbox" id="colorful-toggle" style="accent-color:#6ee7b7;width:16px;height:16px;">
+      <span style="font-size:.85rem;color:#ddd;">彩色模式</span>
+    </label>
   </div>
 </div>
 
@@ -285,6 +293,8 @@
   });
 
   customChars.addEventListener('input', () => scheduleConvert(400));
+
+  document.getElementById('colorful-toggle').addEventListener('change', () => scheduleConvert(0));
 
   // ── 拖拽 & 点击上传 ──
   dropZone.addEventListener('click', () => fileInput.click());
@@ -343,10 +353,12 @@
       ? (customChars.value || '@#S%?*+;:,. ')
       : charsetSel.value;
 
+    const colorful = document.getElementById('colorful-toggle').checked;
     const form = new FormData();
     form.append('image', currentFile);
     form.append('width', widthRange.value);
     form.append('chars', chars);
+    form.append('colorful', colorful ? 'true' : 'false');
 
     try {
       const resp = await fetch('/convert', { method: 'POST', body: form });
