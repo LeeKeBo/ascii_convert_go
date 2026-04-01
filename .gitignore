@@ -18,3 +18,6 @@ mcp-server
 # Go
 *.test
 *.out
+
+# Git worktrees
+.worktrees/
