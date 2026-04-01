@@ -371,9 +371,9 @@
         return;
       }
 
-      const blob = await resp.blob();
+      const data = await resp.json();
       if (resultBlobURL) URL.revokeObjectURL(resultBlobURL);
-      resultBlobURL = URL.createObjectURL(blob);
+      resultBlobURL = data.png;  // already a data: URI
 
       resultImg.src = resultBlobURL;
       downloadBtn.style.display = 'inline-block';
