@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"image/color"
+	"strings"
 	"testing"
 
 	"ascii_convert_go/converter"
@@ -142,6 +143,23 @@ func TestConvertToASCII_ColorfulDiffersFromBW(t *testing.T) {
 		}
 		if same {
 			t.Error("彩色模式和黑白模式输出完全相同，彩色渲染未生效")
+		}
+	}
+}
+
+func TestConvertText_ReturnString(t *testing.T) {
+	img := newSolidImage(50, 40, color.Gray{Y: 128})
+	text, err := converter.ConvertText(img, converter.Options{Width: 20})
+	if err != nil {
+		t.Fatalf("ConvertText 不应报错: %v", err)
+	}
+	if text == "" {
+		t.Fatal("ConvertText 返回空字符串")
+	}
+	lines := strings.Split(strings.TrimRight(text, "\n"), "\n")
+	for i, line := range lines {
+		if len(line) != 20 {
+			t.Errorf("第 %d 行长度期望 20，实际 %d", i, len(line))
 		}
 	}
 }
