@@ -18,6 +18,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    networks:
+      - app_net
 
   nginx:
     image: nginx:1.25-alpine
@@ -32,3 +34,8 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    networks:
+      - app_net
+
+networks:
+  app_net:
