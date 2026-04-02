@@ -1,0 +1,12 @@
+[Unit]
+Description=Run ASCII Monitor every 5 minutes
+Requires=monitor.service
+
+[Timer]
+# 每5分钟运行一次，错开整点
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

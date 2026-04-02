@@ -1,0 +1,16 @@
+[Unit]
+Description=ASCII Convert Monitor Agent
+After=network.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Environment=HEALTH_URL=http://localhost:8080/health
+Environment=APP_LOG_PATH=/var/log/ascii-app.log
+EnvironmentFile=/etc/ascii-monitor.env
+ExecStart=/usr/local/bin/ascii-monitor
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
