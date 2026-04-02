@@ -1,0 +1,66 @@
+name: Auto CHANGELOG
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.go'
+      - 'index.html'
+      - 'miniprogram/**'
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get commit diff
+        id: diff
+        run: |
+          git diff HEAD~1 HEAD -- '*.go' 'index.html' 'miniprogram/**' > /tmp/commit.diff
+          head -300 /tmp/commit.diff > /tmp/commit_trimmed.diff
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog entry
+        id: changelog
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          DIFF=$(cat /tmp/commit_trimmed.diff)
+          COMMIT="${{ steps.diff.outputs.commit_msg }}"
+          DATE=$(date +%Y-%m-%d)
+          PROMPT="根据以下 git commit 信息和 diff，生成一条简洁的中文 Changelog 条目。格式：'- [类型] 描述（≤30字）'，类型从 feat/fix/refactor/docs/chore 中选。只输出这一行，不要其他内容。\n\nCommit: ${COMMIT}\n\nDiff:\n${DIFF}"
+
+          ENTRY=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "{
+              \"model\": \"claude-haiku-4-5\",
+              \"max_tokens\": 100,
+              \"messages\": [{\"role\": \"user\", \"content\": $(echo "$PROMPT" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read()))")}]
+            }" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['content'][0]['text'].strip())" 2>/dev/null || echo "- [chore] ${COMMIT}")
+
+          echo "entry=${DATE} ${ENTRY}" >> $GITHUB_OUTPUT
+
+      - name: Update CHANGELOG.md
+        run: |
+          ENTRY="${{ steps.changelog.outputs.entry }}"
+          # 在 "---" 后第一行插入新条目
+          sed -i "s|^---$|---\n\n${ENTRY}|" CHANGELOG.md
+
+      - name: Commit CHANGELOG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --staged --quiet || git commit -m "docs: auto-update CHANGELOG [skip ci]"
+          git push

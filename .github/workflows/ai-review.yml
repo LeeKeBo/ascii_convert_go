@@ -1,0 +1,64 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '**.go'
+      - 'index.html'
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD -- '*.go' 'index.html' > /tmp/pr.diff
+          # 限制 diff 大小（防止超出 token 限制）
+          head -500 /tmp/pr.diff > /tmp/pr_trimmed.diff
+          echo "diff_size=$(wc -l < /tmp/pr.diff)" >> $GITHUB_OUTPUT
+
+      - name: AI Code Review
+        id: review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          DIFF=$(cat /tmp/pr_trimmed.diff)
+          PROMPT="你是一位 Go 代码审查专家。请审查以下 PR diff，关注：1）错误处理是否完整；2）并发安全（goroutine/锁）；3）性能问题；4）测试覆盖；5）代码可读性。用中文回复，格式：先总结（1-2句），再列问题（每条 ≤30字，严重性标注 🔴严重/🟡警告/🟢建议），最后给出总评（通过/需修改）。\n\nDiff：\n${DIFF}"
+
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "{
+              \"model\": \"claude-haiku-4-5\",
+              \"max_tokens\": 1024,
+              \"messages\": [{\"role\": \"user\", \"content\": $(echo "$PROMPT" | python3 -c "import json,sys; print(json.dumps(sys.stdin.read()))")}]
+            }")
+
+          REVIEW_TEXT=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['content'][0]['text'])" 2>/dev/null || echo "AI 审查暂时不可用")
+          echo "review_text<<EOF" >> $GITHUB_OUTPUT
+          echo "$REVIEW_TEXT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post review comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const review = `## 🤖 AI 代码审查\n\n${{ steps.review.outputs.review_text }}\n\n---\n*由 Claude Haiku 自动生成 · Diff 大小: ${{ steps.diff.outputs.diff_size }} 行*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: review
+            });
