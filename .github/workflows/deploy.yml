@@ -29,6 +29,7 @@ jobs:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           key: ${{ secrets.ECS_SSH_KEY }}
+          port: ${{ secrets.ECS_SSH_PORT }}
           timeout: 300s
           script: |
             set -e
