@@ -1,6 +1,17 @@
 # 编译产物
 ascii_convert_go
 mcp-server
+agents/monitor/monitor
+
+# 微信小程序私有配置
+miniprogram/project.private.config.json
+
+# macOS
+.DS_Store
+
+# Superpowers 本地数据
+.superpowers/
+docs/superpowers/
 
 # Claude 内部配置
 .claude/
