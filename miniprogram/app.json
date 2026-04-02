@@ -1,0 +1,31 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/history/history",
+    "pages/result/result"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#111111",
+    "navigationBarTitleText": "ASCII 字符画",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#111111"
+  },
+  "tabBar": {
+    "color": "#555555",
+    "selectedColor": "#6ee7b7",
+    "backgroundColor": "#1c1c1c",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "转换"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "历史"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json"
+}

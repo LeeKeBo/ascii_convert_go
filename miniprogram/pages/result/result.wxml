@@ -1,0 +1,22 @@
+<view class="container">
+  <!-- 结果图展示 -->
+  <view class="result-wrap">
+    <image src="{{imagePath}}" class="result-img" mode="widthFix"
+           show-menu-by-longpress="true" />
+  </view>
+
+  <!-- 原图对比（可选展示） -->
+  <view class="compare-wrap" wx:if="{{originPath}}">
+    <text class="compare-label">原图</text>
+    <image src="{{originPath}}" class="origin-img" mode="aspectFit" />
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-row">
+    <button class="btn-primary" bindtap="saveToAlbum">💾 保存到相册</button>
+    <button class="btn-secondary" bindtap="shareToFriend">📤 分享</button>
+  </view>
+
+  <!-- 状态信息 -->
+  <text class="status-text" wx:if="{{statusMsg}}">{{statusMsg}}</text>
+</view>

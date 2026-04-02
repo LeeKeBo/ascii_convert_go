@@ -1,0 +1,22 @@
+<view class="container">
+  <view wx:if="{{history.length === 0}}" class="empty">
+    <text>暂无历史记录</text>
+  </view>
+
+  <view wx:else class="list">
+    <view class="item" wx:for="{{history}}" wx:key="id"
+          bindtap="goToResult" data-item="{{item}}">
+      <image src="{{item.resultPath}}" class="thumb" mode="aspectFill"
+             binderror="onImgError" data-index="{{index}}" />
+      <view class="info">
+        <text class="time">{{item.time}}</text>
+        <text class="params">宽度 {{item.params.width}} · {{item.params.colorful ? '彩色' : '黑白'}}</text>
+      </view>
+      <text class="arrow">›</text>
+    </view>
+  </view>
+
+  <button class="clear-btn" wx:if="{{history.length > 0}}" bindtap="clearHistory">
+    清空历史
+  </button>
+</view>

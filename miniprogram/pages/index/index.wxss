@@ -1,0 +1,79 @@
+.container {
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.upload-area {
+  width: 100%;
+  height: 400rpx;
+  background: #1c1c1c;
+  border-radius: 16rpx;
+  border: 1px dashed #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.preview-img {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.upload-icon { font-size: 80rpx; }
+.upload-hint { font-size: 26rpx; color: #555; }
+
+.params-panel {
+  background: #1c1c1c;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.param-label {
+  font-size: 26rpx;
+  color: #aaa;
+  width: 120rpx;
+  flex-shrink: 0;
+}
+
+.slider { flex: 1; margin-left: 20rpx; }
+
+.picker-value {
+  font-size: 26rpx;
+  color: #6ee7b7;
+  border: 1px solid #333;
+  border-radius: 8rpx;
+  padding: 8rpx 20rpx;
+}
+
+.convert-btn {
+  margin-top: 8rpx;
+  width: 100%;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  font-size: 34rpx;
+}
+
+.status-text {
+  font-size: 24rpx;
+  color: #6ee7b7;
+  text-align: center;
+}

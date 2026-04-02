@@ -1,0 +1,55 @@
+<view class="container">
+  <!-- 图片选择区 -->
+  <view class="upload-area" bindtap="chooseImage">
+    <image wx:if="{{previewSrc}}" src="{{previewSrc}}" class="preview-img" mode="aspectFit" />
+    <view wx:else class="upload-placeholder">
+      <text class="upload-icon">📷</text>
+      <text class="upload-hint">点击选择图片</text>
+    </view>
+  </view>
+
+  <!-- 参数面板 -->
+  <view class="params-panel">
+    <!-- 宽度滑块 -->
+    <view class="param-row">
+      <text class="param-label">宽度</text>
+      <slider min="40" max="200" value="{{params.width}}" step="10"
+              bindchange="onWidthChange" activeColor="#6ee7b7"
+              class="slider" show-value />
+    </view>
+
+    <!-- 字符集选择 -->
+    <view class="param-row">
+      <text class="param-label">字符集</text>
+      <picker range="{{charsetOptions}}" range-key="label"
+              value="{{charsetIndex}}" bindchange="onCharsetChange">
+        <view class="picker-value">{{charsetOptions[charsetIndex].label}} ▾</view>
+      </picker>
+    </view>
+
+    <!-- 彩色模式 -->
+    <view class="param-row">
+      <text class="param-label">彩色模式</text>
+      <switch checked="{{params.colorful}}" bindchange="onColorfulChange"
+              color="#6ee7b7" />
+    </view>
+
+    <!-- 智能推荐按钮 -->
+    <view class="param-row" wx:if="{{suggestAvailable}}">
+      <text class="param-label"></text>
+      <button class="btn-secondary {{suggesting ? 'btn-disabled' : ''}}"
+              bindtap="doSuggest" disabled="{{suggesting}}">
+        {{suggesting ? '⏳ 分析中…' : '✨ 智能推荐'}}
+      </button>
+    </view>
+  </view>
+
+  <!-- 转换按钮 -->
+  <button class="btn-primary convert-btn {{!imagePath || converting ? 'btn-disabled' : ''}}"
+          bindtap="doConvert" disabled="{{!imagePath || converting}}">
+    {{converting ? '转换中…' : '开始转换'}}
+  </button>
+
+  <!-- 状态信息 -->
+  <text class="status-text" wx:if="{{statusMsg}}">{{statusMsg}}</text>
+</view>

@@ -1,0 +1,14 @@
+{
+  "appid": "YOUR_APPID",
+  "projectname": "ascii_convert_go",
+  "description": "ASCII 字符画转换小程序",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true
+  },
+  "compileType": "miniprogram",
+  "miniprogramRoot": "./"
+}
