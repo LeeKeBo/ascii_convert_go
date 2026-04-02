@@ -124,13 +124,22 @@ Page({
           this.setData({ statusMsg: '❌ 转换失败，请重试' });
           return;
         }
-        // 将后端返回的 PNG 保存为临时文件
+        // 解析 JSON，取 base64 PNG
+        let pngBase64;
+        try {
+          const json = JSON.parse(res.data);
+          // 去掉 data:image/png;base64, 前缀
+          pngBase64 = json.png.replace(/^data:image\/png;base64,/, '');
+        } catch (e) {
+          this.setData({ statusMsg: '❌ 返回数据解析失败' });
+          return;
+        }
         const tmpPath = `${wx.env.USER_DATA_PATH}/ascii_${Date.now()}.png`;
         const fs = wx.getFileSystemManager();
         fs.writeFile({
           filePath: tmpPath,
-          data: res.data,
-          encoding: 'binary',
+          data: pngBase64,
+          encoding: 'base64',
           success: () => {
             // 保存历史记录
             this._saveHistory(tmpPath);
