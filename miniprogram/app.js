@@ -1,7 +1,7 @@
 App({
   globalData: {
     // 后端 API 根地址（替换为真实域名）
-    API_BASE: 'https://koopli.shop',
+    API_BASE: 'https://koopli.shop:8443',
   },
 
   onLaunch() {
